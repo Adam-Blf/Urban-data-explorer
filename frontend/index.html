@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Data Explorer - Paris</title>
+    <meta name="description" content="Dashboard interactif de la dynamique urbaine et immobilière de Paris">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- MapLibre GL JS -->
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    
+    <div id="app">
+        <!-- Top Navigation Bar -->
+        <header class="glass-panel top-nav">
+            <div class="logo">
+                <i class="fa-solid fa-city"></i>
+                <h1>Urban Data <span>Explorer</span></h1>
+            </div>
+            <div class="nav-controls">
+                <button id="btn-compare" class="btn primary"><i class="fa-solid fa-code-compare"></i> Comparer Arrondissements</button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main>
+            <!-- Map Container -->
+            <div id="map-container">
+                <div id="map"></div>
+                
+                <!-- Map Controls Overlay (Bottom Right) -->
+                <div class="map-controls glass-panel">
+                    <h3>Couches de données</h3>
+                    <div class="layer-toggles">
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layer-velib">
+                            <span class="control-indicator color-velib"></span>
+                            Stations Vélib'
+                        </label>
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layer-belib">
+                            <span class="control-indicator color-belib"></span>
+                            Bornes Belib'
+                        </label>
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layer-ev">
+                            <span class="control-indicator color-ev"></span>
+                            Espaces Verts
+                        </label>
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layer-ecoles">
+                            <span class="control-indicator color-ecoles"></span>
+                            Ecoles & Collèges
+                        </label>
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layer-monuments">
+                            <span class="control-indicator color-monuments"></span>
+                            Monuments
+                        </label>
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layer-social">
+                            <span class="control-indicator color-social"></span>
+                            Logements Sociaux
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Timeline Overlay (Bottom Center) -->
+                <div class="timeline-container glass-panel">
+                    <div class="timeline-header">
+                        <span>Évolution historique</span>
+                        <span id="current-year">2024</span>
+                    </div>
+                    <input type="range" id="timeline-slider" min="2015" max="2024" value="2024" step="1">
+                    <div class="timeline-labels">
+                        <span>2015</span>
+                        <span>2024</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Left Sidebar (Indicators & Stats) -->
+            <aside class="sidebar glass-panel" id="sidebar">
+                <div class="sidebar-header">
+                    <h2>Arrondissement</h2>
+                    <select id="arrondissement-select" class="custom-select">
+                        <option value="0">Vue Globale (Paris)</option>
+                        <!-- Options generated via JS -->
+                    </select>
+                </div>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <i class="fa-solid fa-leaf kpi-icon color-qdv"></i>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-qdv">--</span>
+                            <span class="kpi-label">Qualité de Vie</span>
+                        </div>
+                        <div class="kpi-gauge"><div class="gauge-fill bg-qdv" id="bar-qdv" style="width: 0%"></div></div>
+                    </div>
+                    <div class="kpi-card">
+                        <i class="fa-solid fa-car-burst kpi-icon color-mob"></i>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-mob">--</span>
+                            <span class="kpi-label">Mobilité Urbaine</span>
+                        </div>
+                        <div class="kpi-gauge"><div class="gauge-fill bg-mob" id="bar-mob" style="width: 0%"></div></div>
+                    </div>
+                    <div class="kpi-card">
+                        <i class="fa-solid fa-landmark-dome kpi-icon color-cul"></i>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-cul">--</span>
+                            <span class="kpi-label">Patrimoine Culturel</span>
+                        </div>
+                        <div class="kpi-gauge"><div class="gauge-fill bg-cul" id="bar-cul" style="width: 0%"></div></div>
+                    </div>
+                    <div class="kpi-card">
+                        <i class="fa-solid fa-building-user kpi-icon color-ten"></i>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-ten">--</span>
+                            <span class="kpi-label">Tension Immobilière</span>
+                        </div>
+                        <div class="kpi-gauge"><div class="gauge-fill bg-ten" id="bar-ten" style="width: 0%"></div></div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Détails Logement & Prix</h3>
+                    <canvas id="housingChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Services de proximité</h3>
+                    <canvas id="servicesChart"></canvas>
+                </div>
+            </aside>
+            
+            <!-- Comparison Modal (Hidden by default) -->
+            <div id="compare-modal" class="modal-overlay hidden">
+                <div class="modal-content glass-panel comparison-panel">
+                    <div class="modal-header">
+                        <h2>Comparateur de Quartiers</h2>
+                        <button class="close-btn" id="close-compare"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="comparison-selectors">
+                        <select id="compare-1" class="custom-select"></select>
+                        <span class="vs">VS</span>
+                        <select id="compare-2" class="custom-select"></select>
+                    </div>
+                    <div class="comparison-charts">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/app.js"></script>
+    
+</body>
+</html>
