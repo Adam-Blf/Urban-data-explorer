@@ -1,35 +1,55 @@
+/**
+ * Module Principal de l'Application Frontend (UI Logic)
+ * Auteur : Emilien MORICE (emilien754)
+ * Rôle : Gestion des interactions utilisateur, mise à jour des KPI et orchestration des composants.
+ * Architecture : Event-Driven / Vanilla JS.
+ */
+
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Initialiser UI & Maps
+    console.log("🏙️ Urban Data Explorer : Initialisation de l'interface...");
+
+    // 1. Initialisation des composants visuels (Cartes & Graphiques)
     initCharts();
     await initMap();
     
-    // 2. Récupérer les données Globales (Indicateurs)
+    // 2. Hydratation des données via l'API Gold
+    // Chargement des indicateurs par arrondissement (1-20)
     globalArrondissementsData = await UrbanAPI.getIndicators();
+    
     if (globalArrondissementsData) {
+        console.log("✅ Données analytiques chargées avec succès.");
         populateSelects();
     } else {
-        alert("Attention: Impossible de charger les indicateurs de l'API. Avez-vous lancé le backend ?");
+        console.error("❌ Échec du chargement des données. Vérifiez si l'API FastAPI est lancée.");
+        alert("Attention: Impossible de charger les indicateurs depuis l'API.");
     }
 
-    // 3. Event Listeners
+    // 3. Configuration des écouteurs d'événements (Event Listeners)
+
+    // Sélection de l'arrondissement via le dropdown principal
     document.getElementById("arrondissement-select").addEventListener("change", (e) => {
         selectArrondissement(parseInt(e.target.value));
     });
 
-    // Changement de métrique quand on clique sur une carte KPI
+    // Interaction thématique via les cartes KPI (Change la métrique de la carte)
     const kpiCards = document.querySelectorAll(".kpi-card");
     kpiCards.forEach((card, index) => {
         card.addEventListener("click", () => {
-            const metrics = ["indice_qdv", "indice_mobilite", "indice_culture", "indice_tension"];
+            const metrics = ["score_vie", "score_mob", "score_pat", "score_ten"];
             updateMapMetric(metrics[index]);
             
-            // Highlight
-            kpiCards.forEach(c => c.style.border = "1px solid rgba(255,255,255,0.1)");
-            card.style.border = `1px solid ${getComputedStyle(card.querySelector('.kpi-icon')).color}`;
+            // Feedback Visuel : Highlight la carte sélectionnée
+            kpiCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            
+            // Style dynamique basé sur l'icône
+            const iconColor = getComputedStyle(card.querySelector('.kpi-icon')).color;
+            kpiCards.forEach(c => c.style.borderColor = "rgba(255,255,255,0.1)");
+            card.style.borderColor = iconColor;
         });
     });
 
-    // Toggles de couches
+    // Gestion des Toggles (Point Layers : Velib, Belib, Ecoles, etc.)
     const toggles = document.querySelectorAll('.toggle-control input');
     toggles.forEach(toggle => {
         toggle.addEventListener('change', (e) => {
@@ -37,10 +57,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
 
-    // Comparateur Modals
+    // Orchestration du Comparateur (Modal)
     document.getElementById("btn-compare").addEventListener("click", () => {
         document.getElementById("compare-modal").classList.remove("hidden");
-        updateComparison(); // First draw
+        updateComparison(); 
     });
     
     document.getElementById("close-compare").addEventListener("click", () => {
@@ -50,99 +70,99 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("compare-1").addEventListener("change", updateComparison);
     document.getElementById("compare-2").addEventListener("change", updateComparison);
     
-    // Default selection
+    // État initial : Sélection de la première thématique (Qualité de vie)
     kpiCards[0].click(); 
 });
 
+/**
+ * Remplit les menus déroulants avec les 20 arrondissements de Paris.
+ */
 function populateSelects() {
     const mainSelect = document.getElementById("arrondissement-select");
     const c1 = document.getElementById("compare-1");
     const c2 = document.getElementById("compare-2");
     
-    // Vider
-    // On garde l'option 0 pour la mainSelect
     for (let i = 1; i <= 20; i++) {
         const text = `Paris ${i}e`;
         mainSelect.add(new Option(text, i));
         c1.add(new Option(text, i));
         
         const opt2 = new Option(text, i);
-        if (i === 2) opt2.selected = true; // par defaut 1 vs 2
+        if (i === 18) opt2.selected = true; // Exemple par défaut : 1er vs 18e
         c2.add(opt2);
     }
 }
 
+/**
+ * Met à jour l'ensemble de l'interface pour un arrondissement donné.
+ * @param {number} id - Numéro de l'arrondissement (1-20).
+ */
 function selectArrondissement(id) {
-    document.getElementById("arrondissement-select").value = id;
-    
     if (id === 0) {
         updateGlobalView();
-        map.flyTo({ center: CENTER_PARIS, zoom: ZOOM_PARIS });
+        map.flyTo({ center: [2.3488, 48.8534], zoom: 12 });
         return;
     }
     
-    // Update KPI & Charts
     const data = globalArrondissementsData[id];
     if (data) {
         updateUI(data);
-    }
-    
-    // Zoom in map to that arrondissement feature
-    if (currentGeoJSON && currentGeoJSON.features) {
-        const feature = currentGeoJSON.features.find(f => f.properties.arrondissement === id);
-        if (feature) {
-            // Rough center based on the poly's bbox
-            // (A true implementation would use turf.js, but since maplibre flyto zooms to center, we just approximate or keep zoom)
-            // Lacking simple polygon center in vanilla JS without turf, we just zoom slightly.
-            // On s'en passe pour cette démo, on utilise juste le flyto.
-        }
+        // Zoom automatique sur l'arrondissement via la carte (si nécessaire)
     }
 }
 
+/**
+ * Affiche les statistiques moyennes pour tout Paris.
+ */
 function updateGlobalView() {
-    // Affiche les moyennes ou sommes globales de Paris
     if (!globalArrondissementsData) return;
     
     let sumQDv = 0, sumMob = 0, sumCul = 0, sumTen = 0;
-    
     const count = Object.keys(globalArrondissementsData).length;
+    
     for (let key in globalArrondissementsData) {
-        sumQDv += globalArrondissementsData[key].indice_qdv || 0;
-        sumMob += globalArrondissementsData[key].indice_mobilite || 0;
-        sumCul += globalArrondissementsData[key].indice_culture || 0;
-        sumTen += globalArrondissementsData[key].indice_tension || 0;
+        sumQDv += globalArrondissementsData[key].qualite_vie || 0;
+        sumMob += globalArrondissementsData[key].mobilite || 0;
+        sumCul += globalArrondissementsData[key].patrimoine || 0;
+        sumTen += globalArrondissementsData[key].tension || 0;
     }
 
-    const mockData = {
-        indice_qdv: Math.round(sumQDv / count),
-        indice_mobilite: Math.round(sumMob / count),
-        indice_culture: Math.round(sumCul / count),
-        indice_tension: Math.round(sumTen / count),
-        logements_sociaux: 0, // Placeholder
-        prix_m2: 10500, // Moyenne
-        nb_ecoles: 20,
-        nb_toilettes: 15,
-        nb_marches: 4
+    const avgData = {
+        qualite_vie: Math.round(sumQDv / count),
+        mobilite: Math.round(sumMob / count),
+        patrimoine: Math.round(sumCul / count),
+        tension: Math.round(sumTen / count),
+        details: { prix_m2: 10500, logements_sociaux: 250000 }
     };
     
-    updateUI(mockData);
+    updateUI(avgData);
 }
 
+/**
+ * Rafraîchit les KPI et les graphiques.
+ * @param {Object} data - Données Gold de l'arrondissement.
+ */
 function updateUI(data) {
-    animateCount("kpi-qdv", data.indice_qdv);
-    animateCount("kpi-mob", data.indice_mobilite);
-    animateCount("kpi-cul", data.indice_culture);
-    animateCount("kpi-ten", data.indice_tension);
+    // Animation fluide des chiffres
+    animateCount("kpi-qdv", data.qualite_vie);
+    animateCount("kpi-mob", data.mobilite);
+    animateCount("kpi-cul", data.patrimoine);
+    animateCount("kpi-ten", data.tension);
     
-    document.getElementById("bar-qdv").style.width = `${data.indice_qdv}%`;
-    document.getElementById("bar-mob").style.width = `${data.indice_mobilite}%`;
-    document.getElementById("bar-cul").style.width = `${data.indice_culture}%`;
-    document.getElementById("bar-ten").style.width = `${data.indice_tension}%`;
+    // Mise à jour des barres de progression
+    document.getElementById("bar-qdv").style.width = `${data.qualite_vie}%`;
+    document.getElementById("bar-mob").style.width = `${data.mobilite}%`;
+    document.getElementById("bar-cul").style.width = `${data.patrimoine}%`;
+    document.getElementById("bar-ten").style.width = `${data.tension}%`;
     
+    // Mise à jour des graphiques Chart.js
     updateHousingChart(data);
     updateServicesChart(data);
 }
 
+/**
+ * Met à jour le graphique de comparaison Radar.
+ */
 function updateComparison() {
     const id1 = document.getElementById("compare-1").value;
     const id2 = document.getElementById("compare-2").value;
@@ -157,14 +177,16 @@ function updateComparison() {
     }
 }
 
-// Helper pour animer les chiffres
+/**
+ * Helper : Animation de compteur (CountUp) pour les KPI.
+ */
 function animateCount(elemId, target) {
     const el = document.getElementById(elemId);
     let start = 0;
-    const duration = 1000;
-    const stepTime = Math.abs(Math.floor(duration / 30));
-    
-    const increment = target / 30;
+    const duration = 800;
+    const steps = 20;
+    const stepTime = duration / steps;
+    const increment = target / steps;
     
     const timer = setInterval(() => {
         start += increment;

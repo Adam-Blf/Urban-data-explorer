@@ -1,64 +1,62 @@
+"""
+Phase Bronze : Ingestion des Données Brutes
+Auteur : Arnaud DISSONGO (Panason1c)
+Rôle : Extraction automatisée des datasets de l'API OpenData Paris et Data.gouv.fr.
+       Stockage au format brut (JSON/CSV) dans la couche Bronze.
+"""
+
 import os
 import requests
 import time
-import urllib.parse
-from config import BASE_DIR, BRONZE_DIR, PARIS_OPENDATA_BASE, PARIS_OPENDATA_GEOJSON_BASE, PARIS_DATASETS, DATA_GOUV_DATASETS
+from config import BRONZE_DIR, PARIS_DATASETS, DATA_GOUV_DATASETS
 
 def ensure_bronze_dir():
+    """Vérifie l'existence du dossier data/bronze ou le crée."""
     if not os.path.exists(BRONZE_DIR):
         os.makedirs(BRONZE_DIR)
-        print(f"📁 Création du répertoire: {BRONZE_DIR}")
+        print(f"Creating Bronze directory: {BRONZE_DIR}")
 
 def download_file(url, target_path):
-    print(f"📥 Téléchargement: {url}...")
+    """
+    Télécharge un fichier distant.
+    
+    Args:
+        url (str): L'URL source.
+        target_path (str): Le chemin de destination local.
+    """
+    print(f"Downloading: {url}...")
     try:
         response = requests.get(url, stream=True, timeout=120)
         response.raise_for_status()
-        
         with open(target_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)
-        print(f"✅ Sauvegardé: {target_path} ({(os.path.getsize(target_path) / 1024 / 1024):.2f} MB)")
+        print(f"Success: {target_path} ({(os.path.getsize(target_path) / 1024 / 1024):.2f} MB)")
     except Exception as e:
-        print(f"❌ Erreur lors du téléchargement de {url}: {str(e)}")
+        print(f"Error downloading {url}: {str(e)}")
 
 def ingest_all():
+    """Orchestre l'ingestion de tous les datasets définis dans la config."""
     ensure_bronze_dir()
     
     total_datasets = len(PARIS_DATASETS) + len(DATA_GOUV_DATASETS)
-    current = 1
-    
-    print("\n🚀 Démarrage de la Phase Bronze (Ingestion)")
+    print(f"\n--- Starting Bronze Phase Ingestion ({total_datasets} datasets) ---")
     print("=" * 50)
     
     # 1. OpenData Paris
-    for name, info in PARIS_DATASETS.items():
-        print(f"\n[{current}/{total_datasets}] Traitement de '{name}' (Paris OpenData)")
-        
-        url_template = PARIS_OPENDATA_BASE if info["format"] == "json" else PARIS_OPENDATA_GEOJSON_BASE
-        # L'export API v2.1 de Paris Opendata ramène tout le dataset par défaut.
-        url = url_template.format(dataset=urllib.parse.quote(info["id"]))
-        
-        target_path = os.path.join(BRONZE_DIR, f"{name}.{info['format']}")
-        
-        # Test file existence to avoid redownloading if already there (for dev purposes)
-        # Note: In a real pipeline, we might want to replace. Here we overwrite.
+    for name, url in PARIS_DATASETS.items():
+        ext = "geojson" if "geojson" in url else "json"
+        target_path = os.path.join(BRONZE_DIR, f"{name}.{ext}")
         download_file(url, target_path)
-        current += 1
-        
-        # Petit sleep pour ne pas spammer l'API
-        time.sleep(1)
+        time.sleep(0.2) # Throttling amical
         
     # 2. Data.gouv.fr
-    for name, info in DATA_GOUV_DATASETS.items():
-        print(f"\n[{current}/{total_datasets}] Traitement de '{name}' (Data.gouv.fr)")
-        url = info["url"]
-        target_path = os.path.join(BRONZE_DIR, f"{name}.{info['format']}")
+    for name, url in DATA_GOUV_DATASETS.items():
+        target_path = os.path.join(BRONZE_DIR, f"{name}.csv")
         download_file(url, target_path)
-        current += 1
         
-    print("\n✨ Ingestion terminée avec succès! Toutes les données sont dans 'data/bronze/'.")
+    print("\nBronze Ingestion Complete!")
 
 if __name__ == "__main__":
     ingest_all()

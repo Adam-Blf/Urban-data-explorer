@@ -4,6 +4,32 @@
 
 Le projet suit une architecture **data pipeline classique en 3 couches** (Bronze → Silver → Gold) alimentant une API REST qui sert un dashboard cartographique interactif.
 
+```mermaid
+graph TD
+    subgraph "External Sources"
+        OP[OpenData Paris]
+        DG[Data.gouv.fr]
+    end
+
+    subgraph "Medallion Pipeline"
+        B[Bronze: Raw Data]
+        S[Silver: Cleaned & Spatial Join]
+        G[Gold: Indicators & Aggregations]
+    end
+
+    subgraph "Serving Layer"
+        API[FastAPI Backend]
+        WEB[MapLibre Frontend]
+    end
+
+    OP --> B
+    DG --> B
+    B --> S
+    S --> G
+    G --> API
+    API --> WEB
+```
+
 ## Couches de données
 
 ### 🥉 Bronze — Données Brutes

@@ -1,161 +1,141 @@
+"""
+Phase Gold : Analytics et Agrégation des Indicateurs
+Auteur : Arnaud DISSONGO (Panason1c)
+Rôle : Calcul des 4 indicateurs composites (Qualité de vie, Mobilité, Patrimoine, Tension).
+       Génération du GeoJSON final enrichi pour la cartographie.
+"""
+
 import os
 import json
 import pandas as pd
-from config import BASE_DIR, SILVER_DIR, GOLD_DIR, BRONZE_DIR
+import geopandas as gpd
+from config import SILVER_DIR, GOLD_DIR, BRONZE_DIR
 
 def ensure_gold_dir():
+    """Crée le répertoire data/gold si nécessaire."""
     if not os.path.exists(GOLD_DIR):
         os.makedirs(GOLD_DIR)
-        print(f"📁 Création du répertoire: {GOLD_DIR}")
+        print(f"Creating directory: {GOLD_DIR}")
 
-def load_silver(name):
+def load_silver_json(name):
+    """Charge un dataset Silver en DataFrame et assure la présence du champ arrondissement."""
     path = os.path.join(SILVER_DIR, f"{name}.json")
     if not os.path.exists(path):
-        return pd.DataFrame() # Retourne un DF vide
+        return pd.DataFrame(columns=['arrondissement'])
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        if 'arrondissement' not in df.columns:
+            df['arrondissement'] = 0
+        return df
 
-def normalize_series(series):
-    """Normalise une série Pandas entre 0 et 100."""
-    if series.empty or series.max() == series.min():
-        return pd.Series(0, index=series.index)
-    return ((series - series.min()) / (series.max() - series.min())) * 100
+def calculate_indicators():
+    """
+    Calcule les 4 indices composites par arrondissement.
+    """
+    print("\n--- Analytics: Calculating Gold Indicators ---")
+    
+    stats = {str(i): {
+        "qualite_vie": 0, "mobilite": 0, "patrimoine": 0, "tension": 0,
+        "details": {}
+    } for i in range(1, 21)}
+    
+    # 1. QUALITÉ DE VIE
+    df_ev = load_silver_json("espaces_verts")
+    df_ecoles = load_silver_json("ecoles")
+    df_marches = load_silver_json("marches")
+    
+    for arr in stats:
+        ev_count = len(df_ev[df_ev['arrondissement'] == int(arr)])
+        ecole_count = len(df_ecoles[df_ecoles['arrondissement'] == int(arr)])
+        march_count = len(df_marches[df_marches['arrondissement'] == int(arr)])
+        
+        score = (ev_count * 2) + (ecole_count * 1.5) + (march_count * 3)
+        stats[arr]["qualite_vie"] = min(100, int(score * 1.2))
+        stats[arr]["details"]["espaces_verts"] = ev_count
+        stats[arr]["details"]["ecoles"] = ecole_count
 
-def generate_realistic_dvf():
-    """Génère des prix au m2 réalistes pour Paris (2024)."""
-    # Données moyennées réalistes pour l'année 2024
-    prices = {
-        1: 12500, 2: 11500, 3: 12000, 4: 12800, 5: 12100,
-        6: 14500, 7: 13500, 8: 11800, 9: 10500, 10: 9500,
-        11: 9800, 12: 9200, 13: 8800, 14: 9900, 15: 9700,
-        16: 11200, 17: 10400, 18: 9100, 19: 8200, 20: 8400
+    # 2. MOBILITÉ
+    df_velib = load_silver_json("velib")
+    df_belib = load_silver_json("belib")
+    
+    for arr in stats:
+        v_count = len(df_velib[df_velib['arrondissement'] == int(arr)])
+        b_count = len(df_belib[df_belib['arrondissement'] == int(arr)])
+        score = (v_count * 0.5) + (b_count * 5)
+        stats[arr]["mobilite"] = min(100, int(score))
+
+    # 3. PATRIMOINE
+    df_monum = load_silver_json("monuments_historiques")
+    
+    for arr in stats:
+        m_count = len(df_monum[df_monum['arrondissement'] == int(arr)])
+        score = (m_count * 4) 
+        stats[arr]["patrimoine"] = min(100, int(score))
+
+    # 4. TENSION IMMOBILIÈRE
+    df_soc = load_silver_json("logements_sociaux")
+    avg_prices = {
+        "1": 12500, "2": 11800, "3": 12200, "4": 12800, "5": 12400, "6": 14500, "7": 13900, "8": 11500, "9": 11200, "10": 10200,
+        "11": 10500, "12": 9500, "13": 9200, "14": 10100, "15": 10400, "16": 11200, "17": 10800, "18": 9400, "19": 8500, "20": 8800
     }
-    return pd.Series(prices, name="prix_m2")
 
-def compute_indicators():
-    print("\n🏆 Démarrage de la Phase Gold (Agrégation)")
-    print("=" * 50)
+    for arr in stats:
+        soc_count = df_soc[df_soc['arrondissement'] == int(arr)]['nb_logements'].sum() if not df_soc.empty else 0
+        price = avg_prices.get(arr, 10000)
+        score = (price / 200) - (soc_count / 1000)
+        stats[arr]["tension"] = max(0, min(100, int(score)))
+        stats[arr]["details"]["prix_m2"] = price
+        stats[arr]["details"]["logements_sociaux"] = int(soc_count)
+
+    with open(os.path.join(GOLD_DIR, "indicateurs.json"), 'w', encoding='utf-8') as f:
+        json.dump(stats, f, indent=2, ensure_ascii=False)
+        
+    return stats
+
+def generate_gold_geojson(indicators_dict):
+    """
+    Produit le GeoJSON final enrichi.
+    """
+    print("Map Layer: Generating Gold GeoJSON...")
+    path_arr = os.path.join(BRONZE_DIR, "arrondissements.geojson")
+    if not os.path.exists(path_arr):
+        print("ERROR: missing base GeoJSON in Bronze.")
+        return
+        
+    try:
+        gdf = gpd.read_file(path_arr)
+    except Exception as e:
+        print(f"Warning: gpd.read_file failed ({e}). Fallback to JSON.")
+        with open(path_arr, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        gdf = gpd.GeoDataFrame.from_features(data['features'], crs="EPSG:4326")
+    
+    if 'c_ar' in gdf.columns:
+        gdf['num_arr'] = gdf['c_ar'].astype(str)
+    elif 'c_arint' in gdf.columns:
+        gdf['num_arr'] = gdf['c_arint'].astype(str)
+        
+    def get_stats(row):
+        try:
+            arr_id = str(int(float(row['num_arr'])))
+            ind = indicators_dict.get(arr_id, {})
+            return pd.Series([ind.get("qualite_vie", 0), ind.get("mobilite", 0), ind.get("patrimoine", 0), ind.get("tension", 0)])
+        except:
+            return pd.Series([0, 0, 0, 0])
+    
+    gdf[['score_vie', 'score_mob', 'score_pat', 'score_ten']] = gdf.apply(get_stats, axis=1)
+    gdf.to_file(os.path.join(GOLD_DIR, "arrondissements_stats.geojson"), driver='GeoJSON')
+    print("Gold Layer Ready!")
+
+def process_all():
+    """Point d'entrée pour la phase Gold."""
     ensure_gold_dir()
-    
-    # Initialisation DataFrame des arrondissements (1 à 20)
-    df_arr = pd.DataFrame(index=range(1, 21))
-    df_arr.index.name = "arrondissement"
-    
-    # ---- Chargement et agrégation des données Silver ----
-    
-    # 1. Espaces verts
-    df_ev = load_silver("espaces_verts")
-    if not df_ev.empty:
-        df_arr['ev_surface'] = df_ev.groupby("arrondissement")["surface"].sum()
-    else:
-        df_arr['ev_surface'] = 0
-        
-    # 2. Toilettes, Ecoles, Marches
-    for ds_name, target_col in [("toilettes", "nb_toilettes"), 
-                               ("ecoles", "nb_ecoles"), 
-                               ("marches", "nb_marches")]:
-        df = load_silver(ds_name)
-        if not df.empty:
-            df_arr[target_col] = df.groupby("arrondissement").size()
-        else:
-            df_arr[target_col] = 0
-            
-    # 3. Velib, Belib, Stationnement
-    df_velib = load_silver("velib")
-    if not df_velib.empty:
-        df_arr['velib_stations'] = df_velib.groupby("arrondissement").size()
-        df_arr['velib_capacite'] = df_velib.groupby("arrondissement")['capacite'].sum()
-    else:
-        df_arr['velib_stations'] = 0
-        df_arr['velib_capacite'] = 0
-
-    df_belib = load_silver("belib")
-    df_arr['nb_belib'] = df_belib.groupby("arrondissement").size() if not df_belib.empty else 0
-    
-    df_stat = load_silver("stationnement_emplacements")
-    df_arr['nb_parking'] = df_stat.groupby("arrondissement").size() if not df_stat.empty else 0
-    
-    # 4. Monuments et Musées
-    df_monument = load_silver("monuments_historiques")
-    df_arr['nb_monuments'] = df_monument.groupby("arrondissement").size() if not df_monument.empty else 0
-    
-    # Actuellement la phase silver pour musées n'est pas encore faite, on utilise 0 ou la source
-    df_arr['nb_musees'] = 0 
-    
-    # 5. Logements Sociaux
-    df_ls = load_silver("logements_sociaux")
-    if not df_ls.empty:
-        df_arr['logements_sociaux'] = df_ls.groupby("arrondissement")["nb_logements"].sum()
-    else:
-        df_arr['logements_sociaux'] = 0
-        
-    # Remplaçage des NaN par 0
-    df_arr = df_arr.fillna(0)
-    
-    # 6. DVF (Prix de l'immobilier mocké de manière réaliste)
-    df_dvf = generate_realistic_dvf()
-    df_arr = df_arr.join(df_dvf)
-    
-    print("Calcul des indicateurs composites...")
-    
-    # ======== CALCUL DES INDICATEURS COMPOSITES (0 - 100) ========
-    
-    # 🌿 1. Indice de Qualité de Vie (Espaces verts + Services + Écoles + Marchés)
-    # Les poids: Espaces verts (40%), Écoles (30%), Marches (15%), Toilettes (15%)
-    idx_ev = normalize_series(df_arr['ev_surface']) * 0.4
-    idx_ec = normalize_series(df_arr['nb_ecoles']) * 0.3
-    idx_ma = normalize_series(df_arr['nb_marches']) * 0.15
-    idx_to = normalize_series(df_arr['nb_toilettes']) * 0.15
-    df_arr['indice_qdv'] = (idx_ev + idx_ec + idx_ma + idx_to).round(1)
-    
-    # 🚗 2. Indice de Mobilité Urbaine (Vélib + Belib + Stationnement)
-    # Poids: Velib capacité (50%), Belib (30%), Parking (20%)
-    idx_vk = normalize_series(df_arr['velib_capacite']) * 0.5
-    idx_be = normalize_series(df_arr['nb_belib']) * 0.3
-    idx_pa = normalize_series(df_arr['nb_parking']) * 0.2
-    df_arr['indice_mobilite'] = (idx_vk + idx_be + idx_pa).round(1)
-    
-    # 🏛️ 3. Indice de Patrimoine Culturel (Monuments)
-    idx_mo = normalize_series(df_arr['nb_monuments'])
-    df_arr['indice_culture'] = idx_mo.round(1)
-    
-    # 🏘️ 4. Indice de Tension Immobilière
-    # Plus de logements sociaux => Baisse la tension
-    # Prix élevés => Hausse la tension
-    # Tension max = 100 (Prix très haut, peu de logements sociaux)
-    norm_prix = normalize_series(df_arr['prix_m2'])
-    norm_ls = normalize_series(df_arr['logements_sociaux']) # 0 = Peu, 100 = Beaucoup
-    # Formule combinée : 70% prix, 30% manque de logements sociaux
-    idx_tension = (norm_prix * 0.7) + ((100 - norm_ls) * 0.3)
-    df_arr['indice_tension'] = idx_tension.round(1)
-    
-    # Export en JSON classique (dict index par arrondissement)
-    gold_data = df_arr.to_dict(orient="index")
-    out_json = os.path.join(GOLD_DIR, "indicateurs.json")
-    with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(gold_data, f, ensure_ascii=False, indent=2)
-    print(f"✅ Indicateurs exportés: {out_json}")
-    
-    # Fusionner avec le GeoJSON des arrondissements pour le rendre lisible directement par la map
-    geojson_path = os.path.join(BRONZE_DIR, "arrondissements.geojson")
-    if os.path.exists(geojson_path):
-        import geopandas as gpd
-        gdf = gpd.read_file(geojson_path)
-        
-        # Mapping de l'arrondissement
-        col_ar = 'c_ar' if 'c_ar' in gdf.columns else 'c_arint'
-        gdf['arrondissement'] = gdf[col_ar].astype(int)
-        
-        # Merge de df_arr dans gdf
-        gdf_merged = gdf.merge(df_arr, left_on='arrondissement', right_index=True, how='left')
-        
-        out_geojson = os.path.join(GOLD_DIR, "arrondissements_stats.geojson")
-        gdf_merged.to_file(out_geojson, driver="GeoJSON")
-        print(f"✅ GeoJSON complet exporté: {out_geojson}")
-    
-    print("\n✨ Agrégation Gold terminée!")
+    print("\nStarting Phase Gold (Analytics)")
+    print("=" * 50)
+    indicators = calculate_indicators()
+    generate_gold_geojson(indicators)
+    print("\nPhase Gold complete!")
 
 if __name__ == "__main__":
-    compute_indicators()
-    
+    process_all()

@@ -11,11 +11,17 @@ venv/
 dist/
 build/
 
-# Données brutes volumineuses
-data/bronze/*.json
-data/bronze/*.csv
-data/bronze/*.geojson
+# Données
+# On ignore le Bronze (fichiers bruts volumineux)
+data/bronze/*
 !data/bronze/.gitkeep
+
+# On SUIT le Silver et le Gold pour le déploiement sur Render (Persistance factice)
+!data/silver/
+!data/gold/
+!data/silver/*.json
+!data/gold/*.json
+!data/gold/*.geojson
 
 # IDE
 .vscode/

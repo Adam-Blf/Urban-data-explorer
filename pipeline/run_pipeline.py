@@ -1,46 +1,49 @@
-import os
-import sys
+"""
+Orchestrateur Principal du Pipeline Urban Data Explorer
+Auteurs : Adam BELOUCIF, Arnaud DISSONGO, Emilien MORICE
+Rôle : Exécution séquentielle des phases Bronze, Silver et Gold.
+       Audit final de la qualité des données.
+"""
 
-# Ajouter le chemin courant
+import sys
+import os
+import time
+
+# Ajouter le chemin courant pour les imports locaux
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from ingest import ingest_all
-from transform import process_all
-from aggregate import compute_indicators
+import ingest
+import transform
+import aggregate
+import data_quality
 
-def run():
-    print("=" * 60)
-    print("🏙️ URBAN DATA EXPLORER - PIPELINE DE DONNEES")
-    print("=" * 60)
+def run_main_pipeline():
+    """Point d'entrée global pour le rafraîchissement des données."""
+    start_time = time.time()
     
-    # 1. Bronze
-    ingest_all()
+    print("\n" + "#"*60)
+    print("STARTING URBAN DATA EXPLORER PIPELINE")
+    print("#"*60)
     
-    # 2. Silver
-    process_all()
+    # Étape 1 : Ingestion (Bronze Layer)
+    ingest.ingest_all()
     
-    # 3. Gold
-    compute_indicators()
+    # Étape 2 : Transformation Spatiale (Silver Layer)
+    transform.process_all()
     
-def dummy_run_for_git():
-    """Crée l'architecture de dossiers si les données ne sont pas là."""
-    from aggregate import ensure_gold_dir
-    from transform import ensure_silver_dir
-    from ingest import ensure_bronze_dir
+    # Étape 3 : Calcul des Indicateurs (Gold Layer)
+    aggregate.process_all()
     
-    ensure_bronze_dir()
-    ensure_silver_dir()
-    ensure_gold_dir()
+    # Étape 4 : Audit de Qualité (DataOps Phase)
+    data_quality.audit_pipeline()
     
-    print("Pipeline de données prêt.")
+    end_time = time.time()
+    duration = end_time - start_time
+    
+    print("\n" + "="*60)
+    print("PIPELINE COMPLETED SUCCESSFULLY")
+    print(f"Total Duration: {duration:.2f} seconds")
+    print("="*60 + "\n")
 
-if __name__ == '__main__':
-    # On pourrait lancer 'run' ici dans un cas complet mais pour éviter 
-    # de spammer les APIs en local si c'est déjà téléchargé, 
-    # on limite l'action par défaut ou on gère par argument.
-    if len(sys.argv) > 1 and sys.argv[1] == "--full":
-        run()
-    else:
-        # Just create dirs to avoid Git tracker bugs
-        dummy_run_for_git()
-        print("\nNote: Utilisez 'python run_pipeline.py --full' pour télécharger et transformer toutes les données (peut prendre du temps).")
+if __name__ == "__main__":
+    run_main_pipeline()

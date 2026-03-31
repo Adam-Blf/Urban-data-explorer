@@ -1,0 +1,242 @@
+{
+  "1": {
+    "qualite_vie": 36,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 61,
+    "details": {
+      "espaces_verts": 15,
+      "ecoles": 0,
+      "prix_m2": 12500,
+      "logements_sociaux": 877
+    }
+  },
+  "2": {
+    "qualite_vie": 62,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 58,
+    "details": {
+      "espaces_verts": 26,
+      "ecoles": 0,
+      "prix_m2": 11800,
+      "logements_sociaux": 658
+    }
+  },
+  "3": {
+    "qualite_vie": 98,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 59,
+    "details": {
+      "espaces_verts": 41,
+      "ecoles": 0,
+      "prix_m2": 12200,
+      "logements_sociaux": 1336
+    }
+  },
+  "4": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 62,
+    "details": {
+      "espaces_verts": 63,
+      "ecoles": 0,
+      "prix_m2": 12800,
+      "logements_sociaux": 1677
+    }
+  },
+  "5": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 59,
+    "details": {
+      "espaces_verts": 96,
+      "ecoles": 0,
+      "prix_m2": 12400,
+      "logements_sociaux": 2194
+    }
+  },
+  "6": {
+    "qualite_vie": 98,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 71,
+    "details": {
+      "espaces_verts": 41,
+      "ecoles": 0,
+      "prix_m2": 14500,
+      "logements_sociaux": 920
+    }
+  },
+  "7": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 68,
+    "details": {
+      "espaces_verts": 52,
+      "ecoles": 0,
+      "prix_m2": 13900,
+      "logements_sociaux": 805
+    }
+  },
+  "8": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 56,
+    "details": {
+      "espaces_verts": 45,
+      "ecoles": 0,
+      "prix_m2": 11500,
+      "logements_sociaux": 926
+    }
+  },
+  "9": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 53,
+    "details": {
+      "espaces_verts": 68,
+      "ecoles": 0,
+      "prix_m2": 11200,
+      "logements_sociaux": 2097
+    }
+  },
+  "10": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 46,
+    "details": {
+      "espaces_verts": 105,
+      "ecoles": 0,
+      "prix_m2": 10200,
+      "logements_sociaux": 4859
+    }
+  },
+  "11": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 45,
+    "details": {
+      "espaces_verts": 133,
+      "ecoles": 0,
+      "prix_m2": 10500,
+      "logements_sociaux": 6665
+    }
+  },
+  "12": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 35,
+    "details": {
+      "espaces_verts": 198,
+      "ecoles": 0,
+      "prix_m2": 9500,
+      "logements_sociaux": 11816
+    }
+  },
+  "13": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 30,
+    "details": {
+      "espaces_verts": 249,
+      "ecoles": 0,
+      "prix_m2": 9200,
+      "logements_sociaux": 15700
+    }
+  },
+  "14": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 41,
+    "details": {
+      "espaces_verts": 181,
+      "ecoles": 0,
+      "prix_m2": 10100,
+      "logements_sociaux": 9005
+    }
+  },
+  "15": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 39,
+    "details": {
+      "espaces_verts": 182,
+      "ecoles": 0,
+      "prix_m2": 10400,
+      "logements_sociaux": 12855
+    }
+  },
+  "16": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 51,
+    "details": {
+      "espaces_verts": 174,
+      "ecoles": 0,
+      "prix_m2": 11200,
+      "logements_sociaux": 4834
+    }
+  },
+  "17": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 44,
+    "details": {
+      "espaces_verts": 166,
+      "ecoles": 0,
+      "prix_m2": 10800,
+      "logements_sociaux": 9913
+    }
+  },
+  "18": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 34,
+    "details": {
+      "espaces_verts": 216,
+      "ecoles": 0,
+      "prix_m2": 9400,
+      "logements_sociaux": 12401
+    }
+  },
+  "19": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 30,
+    "details": {
+      "espaces_verts": 234,
+      "ecoles": 0,
+      "prix_m2": 8500,
+      "logements_sociaux": 12170
+    }
+  },
+  "20": {
+    "qualite_vie": 100,
+    "mobilite": 0,
+    "patrimoine": 0,
+    "tension": 29,
+    "details": {
+      "espaces_verts": 231,
+      "ecoles": 0,
+      "prix_m2": 8800,
+      "logements_sociaux": 14836
+    }
+  }
+}

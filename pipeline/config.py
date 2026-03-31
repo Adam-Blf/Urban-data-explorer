@@ -1,16 +1,30 @@
+"""
+Configuration Globale du Pipeline de Données
+Auteurs : Adam BELOUCIF (Adam-Blf), Arnaud DISSONGO (Panason1c)
+Rôle : Centralisation des chemins, endpoints API et schémas des datasets.
+Dernière mise à jour : 31/03/2026
+"""
+
 import os
 
-# Chemins des dossiers (relatifs a la racine du projet)
+# --- Gestion des Chemins (Filesystem) ---
+# Racine du projet (permet l'exécution depuis n'importe quel dossier)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
-BRONZE_DIR = os.path.join(DATA_DIR, "bronze")
-SILVER_DIR = os.path.join(DATA_DIR, "silver")
-GOLD_DIR = os.path.join(DATA_DIR, "gold")
 
-# 1. API OpenData Paris (Export complet dynamique au format JSON)
+# Architecture Médaille (Medallion Architecture)
+BRONZE_DIR = os.path.join(DATA_DIR, "bronze") # Données brutes (Raw)
+SILVER_DIR = os.path.join(DATA_DIR, "silver") # Données nettoyées (Cleansed)
+GOLD_DIR = os.path.join(DATA_DIR, "gold")     # Données agrégées (Analytics)
+
+# --- Sources de Données (Endpoints) ---
+
+# 1. API OpenData Paris (V2.1)
+# Export complet dynamique au format JSON/GeoJSON
 PARIS_OPENDATA_BASE = "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/{dataset}/exports/json"
 PARIS_OPENDATA_GEOJSON_BASE = "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/{dataset}/exports/geojson"
 
+# Catalogue des datasets municipaux
 PARIS_DATASETS = {
     "logements_sociaux": {
         "id": "logements-sociaux-finances-a-paris",
@@ -60,16 +74,17 @@ PARIS_DATASETS = {
         "id": "chantiers-perturbants",
         "format": "json"
     },
-    "arrondissements": { # Pour le fond de carte de base
+    "arrondissements": { # Fond de carte pour les jointures spatiales
         "id": "arrondissements",
         "format": "geojson"
     }
 }
 
-# 2. Data.gouv.fr (téléchargement direct de CSV)
+# 2. Data.gouv.fr (Plateforme Nationale)
+# Téléchargement direct des dernières versions CSV consolidées par le ministère.
 DATA_GOUV_DATASETS = {
     "monuments_historiques": {
-        # URL vers la derniere version du CSV (culture.gouv.fr)
+        # Base Mérimée (Protection du patrimoine)
         "url": "https://www.data.gouv.fr/api/1/datasets/r/3a52af4a-f9da-4dcc-8110-b07774dfb3bc",
         "format": "csv"
     },
