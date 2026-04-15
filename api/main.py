@@ -87,3 +87,17 @@ def compare(a: int, b: int):
     fa = one_arr(a)
     fb = one_arr(b)
     return {"a": fa["properties"], "b": fb["properties"]}
+
+
+@app.get("/matrix/{indicator}")
+def matrix(indicator: str = "prix_m2_median"):
+    """Renvoie {year: {code_ar: value}} pour alimenter la timeline côté front."""
+    df = _ts()
+    if df.empty:
+        raise HTTPException(503, "timeseries not built")
+    if indicator not in df.columns:
+        raise HTTPException(400, f"unknown indicator · available: {list(df.columns)}")
+    out: dict[int, dict[int, float]] = {}
+    for year, sub in df.groupby("annee"):
+        out[int(year)] = {int(r.code_ar): float(getattr(r, indicator)) for r in sub.itertuples()}
+    return {"indicator": indicator, "years": sorted(out.keys()), "data": out}

@@ -13,12 +13,19 @@ SOURCES = {
         "ext": "geojson",
     },
     "logements_sociaux": {
-        "url": "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-social-finance-a-paris/exports/json",
+        "url": "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logements-sociaux-finances-a-paris/exports/json",
         "ext": "json",
     },
-    "dvf_paris": {
-        "url": "https://files.data.gouv.fr/geo-dvf/latest/csv/2024/communes/75/75056.csv",
-        "ext": "csv",
+    "espaces_verts": {
+        "url": "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/espaces_verts/exports/geojson",
+        "ext": "geojson",
+    },
+    **{
+        f"dvf_{y}": {
+            "url": f"https://files.data.gouv.fr/geo-dvf/latest/csv/{y}/departements/75.csv.gz",
+            "ext": "csv.gz",
+        }
+        for y in (2020, 2021, 2022, 2023, 2024)
     },
 }
 
@@ -36,7 +43,13 @@ def fetch(name: str, cfg: dict) -> Path:
 
 
 def run() -> dict[str, Path]:
-    return {name: fetch(name, cfg) for name, cfg in SOURCES.items()}
+    out = {}
+    for name, cfg in SOURCES.items():
+        try:
+            out[name] = fetch(name, cfg)
+        except Exception as e:
+            print(f"[bronze] SKIP {name}: {e}")
+    return out
 
 
 if __name__ == "__main__":

@@ -1,6 +1,11 @@
 const API = (typeof window !== "undefined" && window.URBAN_API) || "http://localhost:8000";
 
-const state = { data: null, indicator: "prix_m2_median", year: null };
+const state = {
+  data: null,
+  indicator: "prix_m2_median",
+  year: null,
+  matrix: null, // {years:[], data:{year:{code_ar:value}}}
+};
 
 async function boot() {
   const [geo, indicators] = await Promise.all([
@@ -15,9 +20,8 @@ async function boot() {
     o.value = k; o.textContent = label; sel.appendChild(o);
   }
   sel.value = state.indicator;
-  sel.onchange = () => { state.indicator = sel.value; paint(); };
+  sel.onchange = async () => { state.indicator = sel.value; await loadMatrix(); paint(); };
 
-  // Populate compare dropdowns
   const cmpA = document.getElementById("cmpA");
   const cmpB = document.getElementById("cmpB");
   for (const f of geo.features) {
@@ -30,7 +34,44 @@ async function boot() {
   }
   cmpA.onchange = cmpB.onchange = compare;
 
+  await loadMatrix();
   initMap(geo);
+}
+
+async function loadMatrix() {
+  try {
+    const r = await fetch(`${API}/matrix/${state.indicator}`).then(r => r.json());
+    state.matrix = r;
+    const slider = document.getElementById("year");
+    slider.min = r.years[0];
+    slider.max = r.years[r.years.length - 1];
+    slider.step = 1;
+    if (!state.year || state.year < r.years[0] || state.year > r.years[r.years.length - 1]) {
+      state.year = r.years[r.years.length - 1];
+    }
+    slider.value = state.year;
+    document.getElementById("year-label").textContent = state.year;
+    slider.oninput = () => {
+      state.year = +slider.value;
+      document.getElementById("year-label").textContent = state.year;
+      applyYearValues();
+      paint();
+    };
+    applyYearValues();
+  } catch { state.matrix = null; }
+}
+
+// Injects the year-specific value on each feature as `__current` for painting.
+function applyYearValues() {
+  if (!state.data || !state.matrix) return;
+  const row = state.matrix.data[state.year] || {};
+  for (const f of state.data.features) {
+    const v = row[f.properties.code_ar];
+    f.properties.__current = (v === undefined || v === null) ? null : +v;
+  }
+  if (window._map && window._map.getSource("arr")) {
+    window._map.getSource("arr").setData(state.data);
+  }
 }
 
 function initMap(geo) {
@@ -49,7 +90,7 @@ function initMap(geo) {
       type: "fill",
       source: "arr",
       paint: {
-        "fill-color": choroplethExpr(state.indicator, geo),
+        "fill-color": choroplethExpr(geo),
         "fill-opacity": 0.78,
         "fill-outline-color": "#0f1115",
       },
@@ -63,12 +104,20 @@ function initMap(geo) {
     map.on("click", "arr-fill", e => showDetail(e.features[0].properties));
     map.on("mouseenter", "arr-fill", () => (map.getCanvas().style.cursor = "pointer"));
     map.on("mouseleave", "arr-fill", () => (map.getCanvas().style.cursor = ""));
+
+    // Keyboard nav: tab through arrondissements
+    map.getCanvas().setAttribute("tabindex", "0");
+    map.getCanvas().setAttribute("aria-label", "Carte choroplèthe des arrondissements de Paris. Utilisez le panneau latéral pour sélectionner un indicateur et une année.");
+
     window._map = map;
   });
 }
 
-function values(geo, key) {
-  return geo.features.map(f => +f.properties[key]).filter(v => !Number.isNaN(v));
+function values(geo) {
+  return geo.features
+    .map(f => f.properties.__current ?? f.properties[state.indicator])
+    .map(v => +v)
+    .filter(v => !Number.isNaN(v));
 }
 
 function quantile(arr, q) {
@@ -76,19 +125,20 @@ function quantile(arr, q) {
   return s[Math.floor((s.length - 1) * q)];
 }
 
-function choroplethExpr(key, geo) {
-  const vals = values(geo, key);
+function choroplethExpr(geo) {
+  const vals = values(geo);
   if (!vals.length) return "#444";
   const stops = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0].map(q => quantile(vals, q));
   const colors = ["#1b2a4e", "#274472", "#3c6997", "#5885af", "#a7c5eb", "#f0a202"];
-  const expr = ["interpolate", ["linear"], ["to-number", ["get", key]]];
+  const key = state.matrix ? "__current" : state.indicator;
+  const expr = ["interpolate", ["linear"], ["to-number", ["get", key], 0]];
   stops.forEach((v, i) => { expr.push(v, colors[i]); });
   return expr;
 }
 
 function paint() {
   if (!window._map || !state.data) return;
-  window._map.setPaintProperty("arr-fill", "fill-color", choroplethExpr(state.indicator, state.data));
+  window._map.setPaintProperty("arr-fill", "fill-color", choroplethExpr(state.data));
 }
 
 function showDetail(props) {
@@ -99,10 +149,11 @@ function showDetail(props) {
     ["Dynamique 5 ans", fmt(props.dynamique_immo_pct, "%")],
     ["Tension locative", fmt(props.tension_locative)],
     ["Mixité sociale", fmt(props.mixite_sociale)],
+    ["Qualité de vie", fmt(props.qualite_vie)],
   ];
   el.innerHTML = `<h3>${props.l_ar || "Arrondissement " + props.code_ar}</h3>` +
     rows.map(([k, v]) => `<div class="kv"><span>${k}</span><strong>${v}</strong></div>`).join("") +
-    `<canvas id="ts-chart" height="160" style="margin-top:12px"></canvas>`;
+    `<canvas id="ts-chart" height="160" style="margin-top:12px" aria-label="Évolution du prix au m²"></canvas>`;
   loadTimeseries(props.code_ar);
 }
 

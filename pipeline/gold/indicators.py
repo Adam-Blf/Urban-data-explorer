@@ -17,12 +17,16 @@ def _load():
         ls = pd.read_parquet(SILVER / "logements_sociaux.parquet")
     except FileNotFoundError:
         ls = pd.DataFrame(columns=["code_ar"])
-    return ar, dvf, ls
+    try:
+        ev = pd.read_parquet(SILVER / "espaces_verts.parquet")
+    except FileNotFoundError:
+        ev = pd.DataFrame(columns=["code_ar", "nb_espaces_verts"])
+    return ar, dvf, ls, ev
 
 
 def build():
     GOLD.mkdir(parents=True, exist_ok=True)
-    ar, dvf, ls = _load()
+    ar, dvf, ls, ev = _load()
 
     # prix m² courant (dernière année dispo)
     last_year = int(dvf["annee"].max())
@@ -33,15 +37,14 @@ def build():
         .rename("prix_m2_median")
     )
 
-    # prix m² 5 ans avant → dynamique
+    # prix m² année la plus ancienne dispo → dynamique
+    first_year = int(dvf["annee"].min())
     prix_past = (
-        dvf[dvf["annee"] == last_year - 5]
+        dvf[dvf["annee"] == first_year]
         .groupby("code_ar")["prix_m2"]
         .median()
         .rename("prix_m2_past")
     )
-
-    # Indicateur 4 · dynamique immobilière
     dyn = ((prix_current - prix_past) / prix_past * 100).rename("dynamique_immo_pct")
 
     # proxy logements sociaux (si dispo)
@@ -74,8 +77,14 @@ def build():
     else:
         ar["mixite_sociale"] = None
 
-    # Indicateur 3 · qualité de vie (placeholder composite · à enrichir air + verts + délits)
-    ar["qualite_vie"] = None
+    # Indicateur 3 · qualité de vie composite (espaces verts / surface, normalisé)
+    if len(ev):
+        ar = ar.merge(ev, on="code_ar", how="left")
+        ar["qualite_vie"] = (ar["nb_espaces_verts"].fillna(0) / ar["surface"]).astype(float)
+        m = ar["qualite_vie"].max() or 1
+        ar["qualite_vie"] = (ar["qualite_vie"] / m).round(3)
+    else:
+        ar["qualite_vie"] = None
 
     # Export GeoJSON pour l'API
     out_geo = GOLD / "arrondissements.geojson"
