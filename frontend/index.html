@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Urban Data Explorer · Paris</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header>
+  <h1>Urban Data Explorer</h1>
+  <p>Logement à Paris · pipeline data + carte interactive</p>
+</header>
+
+<main>
+  <aside id="panel">
+    <label for="indicator">Indicateur</label>
+    <select id="indicator"></select>
+
+    <label for="year">Année</label>
+    <input id="year" type="range" />
+    <output id="year-label"></output>
+
+    <section id="detail" aria-live="polite">
+      <p class="hint">Cliquez sur un arrondissement.</p>
+    </section>
+
+    <section id="compare">
+      <h2>Comparer</h2>
+      <select id="cmpA"></select>
+      <select id="cmpB"></select>
+      <div id="cmp-result"></div>
+    </section>
+  </aside>
+
+  <div id="map" role="application" aria-label="Carte choroplèthe des arrondissements de Paris"></div>
+</main>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="app.js" type="module"></script>
+</body>
+</html>
