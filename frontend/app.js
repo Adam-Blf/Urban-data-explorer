@@ -61,6 +61,7 @@ async function loadMatrix() {
       paint();
     };
     applyYearValues();
+    updateLegend();
   } catch { state.matrix = null; }
 }
 
@@ -80,7 +81,7 @@ function applyYearValues() {
 function initMap(geo) {
   const map = new maplibregl.Map({
     container: "map",
-    style: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
+    style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
     center: [2.3522, 48.8566],
     zoom: 11.2,
   });
@@ -104,7 +105,14 @@ function initMap(geo) {
       source: "arr",
       paint: { "line-color": "#0f1115", "line-width": 1 },
     });
-    map.on("click", "arr-fill", e => showDetail(e.features[0].properties));
+    map.on("click", "arr-fill", e => {
+      const p = e.features[0].properties;
+      showDetail(p);
+      new maplibregl.Popup({ closeButton: false, offset: 8 })
+        .setLngLat(e.lngLat)
+        .setHTML(`<strong>${p.l_ar || p.code_ar + "e"}</strong><br>${(p.__current ?? p[state.indicator] ?? "—")}`)
+        .addTo(map);
+    });
     map.on("mouseenter", "arr-fill", () => (map.getCanvas().style.cursor = "pointer"));
     map.on("mouseleave", "arr-fill", () => (map.getCanvas().style.cursor = ""));
 
@@ -142,6 +150,20 @@ function choroplethExpr(geo) {
 function paint() {
   if (!window._map || !state.data) return;
   window._map.setPaintProperty("arr-fill", "fill-color", choroplethExpr(state.data));
+  updateLegend();
+}
+
+function updateLegend() {
+  const vals = values(state.data);
+  if (!vals.length) return;
+  const fmtNum = v => {
+    const n = +v;
+    if (Math.abs(n) >= 1000) return Math.round(n).toLocaleString("fr-FR");
+    return n.toFixed(2);
+  };
+  document.getElementById("lg-min").textContent = fmtNum(quantile(vals, 0));
+  document.getElementById("lg-med").textContent = fmtNum(quantile(vals, 0.5));
+  document.getElementById("lg-max").textContent = fmtNum(quantile(vals, 1));
 }
 
 function showDetail(props) {
