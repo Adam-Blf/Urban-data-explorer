@@ -67,3 +67,10 @@ docker compose up
 - [@Adam-Blf](https://github.com/Adam-Blf)
 - [@Panason1c](https://github.com/Panason1c)
 - [@emilien754](https://github.com/emilien754)
+
+
+---
+
+<p align="center">
+  <sub>Par <a href="https://adam.beloucif.com">Adam Beloucif</a> · Data Engineer & Fullstack Developer · <a href="https://github.com/Adam-Blf">GitHub</a> · <a href="https://www.linkedin.com/in/adambeloucif/">LinkedIn</a></sub>
+</p>
