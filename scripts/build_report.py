@@ -311,6 +311,24 @@ def main():
     story.append(styled_table(rules, col_widths=[3.6 * cm, 6.4 * cm, 6.6 * cm]))
     story.append(PageBreak())
 
+    # ---- 8b. Tests + déploiement ----
+    section(story, styles, "8b · Qualité automatisée &amp; déploiement", [
+        "<b>Tests ·</b> 20 tests pytest (smoke imports, intégration API, "
+        "invariants métier KPI) lancés à chaque commit via GitHub Actions "
+        "(<font face='Courier'>.github/workflows/ci.yml</font>).",
+        "<b>CI ·</b> lint ruff · pytest · sanity du seed DuckDB · build PDF + PPT · "
+        "smoke test API (uvicorn boot + curl /health). Artifacts uploadés (rétention 14 j).",
+        "<b>Déploiement ·</b> frontend statique sur Vercel "
+        "(<font face='Courier'>frontend/vercel.json</font>) · API conteneurisée "
+        "(<font face='Courier'>Dockerfile</font> + <font face='Courier'>docker-compose.yml</font>) "
+        "déployable sur Render, Fly.io, Cloud Run. Guide complet dans "
+        "<font face='Courier'>docs/DEPLOYMENT.md</font>.",
+        "<b>Démo immédiate ·</b> base <font face='Courier'>data/demo/urban.duckdb</font> "
+        "(2.8 MB, 20 arr · 1 440 transactions × mois · 2 822 POI · 1 440 timeline) "
+        "commitée pour que l'API + le front fonctionnent dès le clone, "
+        "sans télécharger les ~500 MB de DVF/POI bruts.",
+    ])
+
     # ---- 9. Résultats ----
     section(story, styles, "9 · Résultats &amp; conclusion", [
         "La plateforme livre les attendus du sujet : pipeline d'ingestion planifié "

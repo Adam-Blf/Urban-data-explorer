@@ -1,11 +1,16 @@
 # Urban Data Explorer
 
+[![CI](https://github.com/Adam-Blf/urban-data-explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/Adam-Blf/urban-data-explorer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
 [![MapLibre](https://img.shields.io/badge/MapLibre-GL%20JS-396CB2.svg)](https://maplibre.org/)
+[![DuckDB](https://img.shields.io/badge/DuckDB-1.1-FFF000.svg)](https://duckdb.org/)
 [![Architecture](https://img.shields.io/badge/architecture-medallion-FFC857.svg)](docs/ARCHITECTURE.md)
+[![Tests](https://img.shields.io/badge/tests-20%20passing-06D6A0.svg)](#tests)
 [![Version](https://img.shields.io/badge/version-1.0.0-success.svg)](#)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Adam-Blf/urban-data-explorer&root-directory=frontend)
 
 > Plateforme open data Paris · pipeline médaillon (Bronze / Silver / Gold), API REST sécurisée et dashboard cartographique pour explorer les dynamiques du logement parisien.
 
@@ -158,9 +163,33 @@ Aucun build JS · pur HTML + ESM via CDN.
 ## Tests
 
 ```bash
-pytest -q
-ruff check .
+pytest -q          # 20 tests · smoke + API + KPI invariants
+ruff check .       # lint
 ```
+
+CI GitHub Actions (`.github/workflows/ci.yml`) joue lint + tests + seed
+DB + build PDF + build PPT + smoke API à chaque push.
+
+## Déploiement
+
+- **Frontend statique** · [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) ·
+  `vercel --prod` depuis `frontend/`
+- **API conteneurisée** · `docker compose up --build` (ou `docker build .`
+  pour Render / Fly.io / Cloud Run)
+- **Demo DB** · `data/demo/urban.duckdb` (2.8 MB, commitée) · l'API + le
+  front fonctionnent sans rejouer le pipeline
+
+## Schémas data
+
+Diagrammes Mermaid (rendus nativement par GitHub) ·
+[docs/schemas.md](docs/schemas.md) · pipeline médaillon, modèle
+relationnel Gold (ER), flux d'auth, partitionnement Bronze/Silver.
+
+## Soutenance
+
+Script storytelling 10 min + Q&A · [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+Slides PPT premium et rapport PDF générés via les scripts
+`scripts/build_slides.py` et `scripts/build_report.py` à partir des MD docs.
 
 ## Structure du repo
 
