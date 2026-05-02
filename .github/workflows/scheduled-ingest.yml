@@ -1,0 +1,54 @@
+name: Scheduled ingestion
+
+# Pipeline d'ingestion planifiée — exigence du sujet UDE.
+# Tourne tous les lundis à 04:00 UTC (06:00 Paris) et publie un artefact
+# avec le DuckDB Gold + le manifest de run, qui peut être promu en
+# release ou pushé vers un object store.
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"     # every Monday 04:00 UTC
+  workflow_dispatch:        # manual trigger
+
+concurrency:
+  group: scheduled-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pipeline (skip POI in scheduled mode for speed)
+        env:
+          DATA_LAKE_ROOT: ./data
+          RAW_DIR: ./data/raw
+          SILVER_DIR: ./data/silver
+          GOLD_DIR: ./data/gold
+          GOLD_DUCKDB_PATH: ./data/gold/urban.duckdb
+          LOGS_DIR: ./logs
+        run: python -m pipeline.run_pipeline --layers all --skip-poi
+
+      - name: Build run manifest (lineage)
+        run: python scripts/run_manifest.py
+
+      - name: Upload run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-run-${{ github.run_id }}
+          path: |
+            data/gold/urban.duckdb
+            data/manifests/
+            logs/
+          retention-days: 30
+          if-no-files-found: warn
