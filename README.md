@@ -1,5 +1,6 @@
 # Urban Data Explorer
 
+[![EFREI Paris](https://img.shields.io/badge/EFREI-M1%20Data%20Eng%20%26%20IA-005CA9?style=flat-square&labelColor=000000)](https://www.efrei.fr/)
 [![CI](https://github.com/Adam-Blf/urban-data-explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/Adam-Blf/urban-data-explorer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
