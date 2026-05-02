@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     # --- Gold relational store ---
     gold_duckdb_path: Path = Field(
-        default=Path("./data/gold/urban.duckdb"),
+        default=Path("./data/demo/urban.duckdb"),
         alias="GOLD_DUCKDB_PATH",
     )
 

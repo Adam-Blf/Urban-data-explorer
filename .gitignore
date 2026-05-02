@@ -24,6 +24,10 @@ data/gold/
 *.sqlite
 *.db
 
+# … but allow the demo seed (committed for instant demo)
+!data/demo/
+!data/demo/urban.duckdb
+
 # Logs
 logs/
 *.log
