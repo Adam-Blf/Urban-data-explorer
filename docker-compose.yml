@@ -1,0 +1,34 @@
+# Local full-stack demo · API container + frontend served via nginx alpine.
+# Usage:
+#   docker compose up --build
+#   → API   on http://localhost:8000
+#   → Front on http://localhost:5500
+
+services:
+  api:
+    build: .
+    image: urban-data-explorer-api:1.0.0
+    container_name: ude-api
+    ports:
+      - "8000:8000"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-please-change}
+      DEMO_USER: ${DEMO_USER:-admin}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-admin}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: ude-front
+    ports:
+      - "5500:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+    restart: unless-stopped
