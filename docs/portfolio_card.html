@@ -1,0 +1,113 @@
+<!--
+  Carte projet à intégrer dans https://adam.beloucif.com (page projets).
+  HTML autonome · style sombre cohérent avec le projet, ajustable au design
+  system du portfolio.
+-->
+<article class="project-card" data-project="urban-data-explorer">
+    <header class="project-header">
+        <div class="project-meta">
+            <span class="badge badge-school">EFREI · M1 Data Eng</span>
+            <span class="badge badge-year">2026</span>
+            <span class="badge badge-team">Binôme · Emilien Morice</span>
+        </div>
+        <h2 class="project-title">Urban Data Explorer</h2>
+        <p class="project-tagline">
+            Plateforme open data Paris · pipeline médaillon, API REST sécurisée
+            et dashboard cartographique pour explorer les dynamiques du logement
+            parisien.
+        </p>
+    </header>
+
+    <figure class="project-cover">
+        <img
+            src="/projects/urban-data-explorer/cover.png"
+            srcset="/projects/urban-data-explorer/cover.png 1x,
+                    /projects/urban-data-explorer/cover@2x.png 2x"
+            alt="Capture du dashboard Urban Data Explorer · choroplèthe Paris"
+            loading="lazy"
+            width="1600" height="1000"
+        />
+    </figure>
+
+    <section class="project-stack">
+        <h3>Stack</h3>
+        <ul class="chips">
+            <li>Python 3.12</li><li>Polars</li><li>DuckDB</li><li>Shapely</li>
+            <li>FastAPI</li><li>JWT</li><li>MapLibre GL</li><li>Chart.js</li>
+            <li>Docker</li><li>Vercel</li><li>GitHub Actions</li>
+        </ul>
+    </section>
+
+    <section class="project-highlights">
+        <h3>Highlights</h3>
+        <dl class="highlights-grid">
+            <div><dt>17</dt><dd>sources open data agrégées</dd></div>
+            <div><dt>4</dt><dd>indicateurs composites originaux</dd></div>
+            <div><dt>4</dt><dd>niveaux d'information cartographique</dd></div>
+            <div><dt>20</dt><dd>tests pytest · ruff + bandit OK</dd></div>
+        </dl>
+    </section>
+
+    <section class="project-actions">
+        <a class="btn btn-primary" href="https://github.com/Adam-Blf/urban-data-explorer">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            Repo GitHub
+        </a>
+        <a class="btn btn-secondary" href="https://urban-data-explorer.vercel.app">
+            Démo live
+        </a>
+        <a class="btn btn-tertiary" href="https://github.com/Adam-Blf/urban-data-explorer/releases/latest">
+            Rapport PDF + soutenance PPT
+        </a>
+    </section>
+
+    <footer class="project-footer">
+        <p>
+            Cours <strong>Architecture de Données</strong> · M1 Data Engineering &amp; IA ·
+            <a href="https://www.efrei.fr/">EFREI Paris</a> · 2026
+        </p>
+    </footer>
+</article>
+
+<style>
+    /* Self-contained styles — adapt to your portfolio design system. */
+    .project-card {
+        background: linear-gradient(180deg, #11172d, #0b1020);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 24px;
+        color: #f4f6fb;
+        padding: 32px;
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        max-width: 960px;
+        margin: 32px auto;
+        box-shadow: 0 30px 60px -25px rgba(0,0,0,.6);
+    }
+    .project-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .badge { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.06); color: #c9d0e3; }
+    .badge-school { background: #005CA9; color: #fff; }
+    .badge-year   { background: rgba(255,209,102,.18); color: #FFD166; }
+    .project-title { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .project-tagline { color: #c9d0e3; line-height: 1.5; margin: 0; max-width: 70ch; }
+    .project-cover { margin: 24px 0; }
+    .project-cover img { width: 100%; height: auto; border-radius: 16px; border: 1px solid rgba(255,255,255,.08); display: block; }
+    .project-stack h3, .project-highlights h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: #c9d0e3; margin: 20px 0 8px; }
+    .chips { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+    .chips li { font-size: 12px; padding: 4px 10px; border-radius: 8px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.06); color: #f4f6fb; }
+    .highlights-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0; }
+    .highlights-grid > div { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 14px; }
+    .highlights-grid dt { font-size: 28px; font-weight: 800; color: #FFD166; margin: 0; }
+    .highlights-grid dd { margin: 4px 0 0; font-size: 12px; color: #c9d0e3; }
+    .project-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 13px; text-decoration: none; transition: transform .15s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary   { background: linear-gradient(135deg, #FFD166, #06D6A0); color: #0b1020; }
+    .btn-secondary { background: rgba(255,255,255,.08); color: #f4f6fb; border: 1px solid rgba(255,255,255,.12); }
+    .btn-tertiary  { background: transparent; color: #06D6A0; border: 1px solid rgba(6,214,160,.4); }
+    .project-footer { margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); color: #c9d0e3; font-size: 12px; }
+    .project-footer a { color: #FFD166; text-decoration: none; }
+    @media (max-width: 720px) {
+        .highlights-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
