@@ -31,10 +31,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          # PDF/PPT generators only · scikit-learn was a leftover from an
-          # earlier ML iteration removed from scope. svglib needs libcairo2-dev
-          # which we don't pull in (PNG logo is committed directly).
-          pip install reportlab python-pptx
+          # PDF/PPT generators only · svglib needs libcairo2-dev which we
+          # don't pull in (PNG logo is committed directly).
+          # ruff pinned to 0.15.12 to match local dev version (CI was failing
+          # on UP038 / F401 rules introduced after our local 0.8.4).
+          pip install reportlab python-pptx ruff==0.15.12
 
       - name: Ruff (lint)
         run: ruff check .

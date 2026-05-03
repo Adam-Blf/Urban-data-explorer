@@ -15,7 +15,6 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     Image,
-    KeepInFrame,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
