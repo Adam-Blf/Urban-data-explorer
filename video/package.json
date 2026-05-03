@@ -1,0 +1,23 @@
+{
+  "name": "urban-data-explorer-demo-video",
+  "version": "1.0.0",
+  "description": "Vidéo de démo Remotion 4 — Urban Data Explorer · M1 EFREI",
+  "private": true,
+  "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render UrbanDataExplorerDemo out/urban-data-explorer-demo.mp4",
+    "build:webm": "remotion render UrbanDataExplorerDemo out/urban-data-explorer-demo.webm --codec=vp9"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.380",
+    "@remotion/google-fonts": "4.0.380",
+    "@remotion/shapes": "4.0.380",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.380"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.6.3"
+  }
+}
