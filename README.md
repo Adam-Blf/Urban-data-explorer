@@ -1,5 +1,10 @@
 # Urban Data Explorer
 
+<!-- adam-badges:start -->
+[![commits](https://img.shields.io/github/commit-activity/t/Adam-Blf/urban-data-explorer?color=001329&label=commits&style=flat-square)](https://github.com/Adam-Blf/urban-data-explorer/commits) [![visites](https://hits.sh/github.com/Adam-Blf/urban-data-explorer.svg?style=flat-square&label=visites&color=001329)](https://hits.sh/github.com/Adam-Blf/urban-data-explorer/) [![last commit](https://img.shields.io/github/last-commit/Adam-Blf/urban-data-explorer?color=D4A437&style=flat-square&label=dernier%20push)](https://github.com/Adam-Blf/urban-data-explorer/commits) [![top language](https://img.shields.io/github/languages/top/Adam-Blf/urban-data-explorer?style=flat-square)](https://github.com/Adam-Blf/urban-data-explorer) [![license](https://img.shields.io/github/license/Adam-Blf/urban-data-explorer?style=flat-square&color=D4A437)](LICENSE)
+<!-- adam-badges:end -->
+
+
 [![EFREI Paris](https://img.shields.io/badge/EFREI-M1%20Data%20Eng%20%26%20IA-005CA9?style=flat-square&labelColor=000000)](https://www.efrei.fr/)
 [![CI](https://github.com/Adam-Blf/urban-data-explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/Adam-Blf/urban-data-explorer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
