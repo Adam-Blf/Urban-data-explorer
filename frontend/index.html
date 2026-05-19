@@ -1,108 +1,27 @@
 <!doctype html>
-<html lang="fr">
-<head>
+<html lang="en">
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Urban Data Explorer · Plateforme open data Paris · pipeline médaillon, API REST sécurisée et dashboard cartographique pour explorer les dynamiques du logement parisien." />
-    <meta name="theme-color" content="#0b1020" />
-    <meta name="udeApiBase" content="http://localhost:8000" />
-    <title>Urban Data Explorer · Paris</title>
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css" />
-</head>
-<body>
-<a class="skip-link" href="#main">Aller au contenu principal</a>
-
-<aside id="sidebar" aria-label="Panneau de contrôle et indicateurs">
-    <header class="brand">
-        <div class="logo">UDE</div>
-        <div>
-            <h1>Urban Data Explorer</h1>
-            <p class="tagline">Paris · marché du logement · indicateurs composites</p>
-        </div>
+    <title>Urban Data Explorer v2</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Urban Data Explorer v2</h1>
+      <p>HDFS + Hive + Spark + Kafka + Postgres + Cassandra</p>
     </header>
-
-    <section class="login" id="login-section" aria-labelledby="login-h">
-        <h2 id="login-h">Connexion</h2>
-        <label for="username" class="visually-hidden">Nom d'utilisateur</label>
-        <input id="username" placeholder="utilisateur" value="admin" autocomplete="username" />
-        <label for="password" class="visually-hidden">Mot de passe</label>
-        <input id="password" type="password" placeholder="mot de passe" value="admin" autocomplete="current-password" />
-        <button id="login-btn" type="button">Se connecter</button>
-        <p class="hint" id="login-hint" role="status" aria-live="polite"></p>
-    </section>
-
-    <section class="filters hidden" id="filters-section">
-        <h2>Couches & filtres</h2>
-        <label>Indicateur affiché
-            <select id="indicator-select">
-                <option value="prix_m2">Prix m² médian (€)</option>
-                <option value="idx_accessibilite">Indice accessibilité</option>
-                <option value="idx_tension">Indice tension</option>
-                <option value="idx_effort_social">Indice effort social</option>
-                <option value="idx_attractivite">Indice attractivité</option>
-                <option value="nb_culture">Équipements culture</option>
-                <option value="nb_sante">Équipements santé</option>
-                <option value="nb_transport">Équipements transport</option>
-            </select>
-        </label>
-
-        <fieldset class="layers">
-            <legend>Points d'intérêt</legend>
-            <label><input type="checkbox" data-cat="transport"      /> Transport (Vélib, Belib)</label>
-            <label><input type="checkbox" data-cat="service_public" /> Services publics (écoles, sanisettes)</label>
-            <label><input type="checkbox" data-cat="commerce"       /> Commerce (marchés)</label>
-            <label><input type="checkbox" data-cat="culture"        /> Culture (musées, monuments)</label>
-            <label><input type="checkbox" data-cat="sante"          /> Santé (hôpitaux)</label>
-            <label><input type="checkbox" data-cat="environnement"  /> Environnement (espaces verts)</label>
-        </fieldset>
-
-        <fieldset class="timeline">
-            <legend>Timeline · prix m² mensuel</legend>
-            <input type="range" id="time-range" min="0" max="0" value="0" step="1" />
-            <div class="time-label" id="time-label">—</div>
-        </fieldset>
-
-        <fieldset class="compare">
-            <legend>Comparaison</legend>
-            <label>Arr. A
-                <select id="compare-a"></select>
-            </label>
-            <label>Arr. B
-                <select id="compare-b"></select>
-            </label>
-            <button id="compare-btn">Comparer</button>
-        </fieldset>
-    </section>
-
-    <section class="kpi-card hidden" id="kpi-section">
-        <h2 id="kpi-title">— Sélectionne un arrondissement —</h2>
-        <div class="kpi-grid" id="kpi-grid"></div>
-        <canvas id="chart-bar"></canvas>
-        <canvas id="chart-line"></canvas>
-    </section>
-
-    <section class="compare-card hidden" id="compare-section">
-        <h2>Comparaison <span id="compare-title"></span></h2>
-        <canvas id="chart-compare"></canvas>
-    </section>
-
-    <footer class="credits">
-        <p>Urban Data Explorer · M1 Data Eng. · EFREI</p>
-        <p>Adam Beloucif · Emilien Morice · 2026</p>
-    </footer>
-</aside>
-
-<main id="main" role="main">
-    <div id="map" aria-label="Carte cartographique des arrondissements de Paris" tabindex="0"></div>
-</main>
-
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-<script type="module" src="./app.js"></script>
-
-</body>
+    <main>
+      <section>
+        <h2>Arrondissement KPIs</h2>
+        <pre id="kpi-output">Loading...</pre>
+      </section>
+      <section>
+        <h2>Recent Events</h2>
+        <pre id="events-output">Loading...</pre>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
 </html>
+

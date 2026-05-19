@@ -1,34 +1,127 @@
-# Local full-stack demo · API container + frontend served via nginx alpine.
-# Usage:
-#   docker compose up --build
-#   → API   on http://localhost:8000
-#   → Front on http://localhost:5500
-
 services:
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: bitnami/kafka:3.7
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"
+    volumes:
+      - ./scripts:/scripts:ro
+
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=ude
+      - POSTGRES_USER=ude
+      - POSTGRES_PASSWORD=ude
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  cassandra:
+    image: cassandra:4.1
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./cassandra/schema.cql:/scripts/schema.cql:ro
+      - ./scripts:/scripts:ro
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    environment:
+      - CLUSTER_NAME=ude
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    ports:
+      - "9870:9870"
+      - "8020:8020"
+    volumes:
+      - ./scripts:/scripts:ro
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    depends_on:
+      - namenode
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+      - HDFS_CONF_dfs_replication=1
+
+  hive-metastore-db:
+    image: postgres:12
+    environment:
+      - POSTGRES_DB=metastore
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hive
+
+  hive-metastore:
+    image: bde2020/hive-metastore:2.3.2-postgresql-metastore
+    depends_on:
+      - namenode
+      - datanode
+      - hive-metastore-db
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+      - HIVE_METASTORE_DB_TYPE=postgres
+      - HIVE_METASTORE_HOST=hive-metastore
+      - HIVE_METASTORE_USER=hive
+      - HIVE_METASTORE_PASS=hive
+      - HIVE_METASTORE_DB_HOST=hive-metastore-db
+
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    depends_on:
+      - hive-metastore
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+      - HIVE_METASTORE_URIS=thrift://hive-metastore:9083
+    ports:
+      - "10000:10000"
+    volumes:
+      - ./hive/ddl:/hive/ddl:ro
+
+  spark-master:
+    image: bitnami/spark:3.5
+    environment:
+      - SPARK_MODE=master
+    ports:
+      - "7077:7077"
+      - "8081:8080"
+    volumes:
+      - ./spark/jobs:/opt/spark/jobs:ro
+
+  spark-worker:
+    image: bitnami/spark:3.5
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+
   api:
-    build: .
-    image: urban-data-explorer-api:1.0.0
-    container_name: ude-api
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    depends_on:
+      - postgres
+      - cassandra
+    env_file:
+      - .env
     ports:
       - "8000:8000"
-    environment:
-      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-please-change}
-      DEMO_USER: ${DEMO_USER:-admin}
-      DEMO_PASSWORD: ${DEMO_PASSWORD:-admin}
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
   frontend:
-    image: nginx:1.27-alpine
-    container_name: ude-front
+    build: ./frontend
     ports:
-      - "5500:80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html:ro
-    depends_on:
-      - api
-    restart: unless-stopped
+      - "8080:80"

@@ -1,26 +1,33 @@
-"""Accès lecture-seule au datamart Gold (DuckDB)."""
-
 from __future__ import annotations
 
-from collections.abc import Iterator
+import os
 from contextlib import contextmanager
 
-import duckdb
-
-from pipeline.config import get_settings
+import psycopg2
+from cassandra.cluster import Cluster
 
 
 @contextmanager
-def gold_connection() -> Iterator[duckdb.DuckDBPyConnection]:
-    """Connexion DuckDB read-only sur le fichier Gold (par requête)."""
-    s = get_settings()
-    if not s.gold_duckdb_path.exists():
-        raise FileNotFoundError(
-            f"Gold DuckDB introuvable à {s.gold_duckdb_path} · "
-            "lance d'abord `python -m pipeline.run_pipeline`."
-        )
-    con = duckdb.connect(s.gold_duckdb_path.as_posix(), read_only=True)
+def pg_conn():
+    conn = psycopg2.connect(
+        host=os.getenv("POSTGRES_HOST", "postgres"),
+        port=int(os.getenv("POSTGRES_PORT", "5432")),
+        dbname=os.getenv("POSTGRES_DB", "ude"),
+        user=os.getenv("POSTGRES_USER", "ude"),
+        password=os.getenv("POSTGRES_PASSWORD", "ude"),
+    )
     try:
-        yield con
+        yield conn
     finally:
-        con.close()
+        conn.close()
+
+
+def cassandra_session():
+    host = os.getenv("CASSANDRA_HOST", "cassandra")
+    port = int(os.getenv("CASSANDRA_PORT", "9042"))
+    keyspace = os.getenv("CASSANDRA_KEYSPACE", "ude")
+    cluster = Cluster([host], port=port)
+    session = cluster.connect()
+    session.set_keyspace(keyspace)
+    return session
+

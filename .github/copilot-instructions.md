@@ -1,29 +1,25 @@
-# Copilot instructions — Urban Data Explorer
+# Copilot instructions (Urban Data Explorer v2)
 
-## Build, test, and lint
-- **Install (Python):** `pip install -r requirements.txt`
-- **Pre-commit:** `pip install pre-commit && pre-commit install` (run: `pre-commit run --all-files`)
-- **Lint:** `ruff check .` (format: `ruff format .`)
-- **Security lint:** `bandit -c .bandit.yaml -r api pipeline scripts`
-- **Tests:** `pytest -q`
-- **Single test example:** `pytest tests/test_api.py::test_health`
-- **Build artifacts:** `python scripts/build_report.py`, `python scripts/build_guide.py`, `python scripts/build_slides.py`
-- **Seed demo DB (CI parity):** `python scripts/seed_demo_db.py`
-- **Run API:** `uvicorn api.main:app --reload --port 8000`
-- **Run full pipeline:** `python -m pipeline.run_pipeline --layers all`
-- **Run frontend (static):** `cd frontend && python -m http.server 5500`
-- **Demo video (Remotion, optional):** `cd video && npm install && npm run start` (render: `npm run build`)
+## Build, run, test
+- **Infra:** `docker compose up -d`
+- **Init HDFS:** `docker compose exec namenode bash /scripts/init_hdfs.sh`
+- **Topic Kafka:** `docker compose exec kafka bash /scripts/create_topic.sh`
+- **Schema Cassandra:** `docker compose exec cassandra bash /scripts/init_cassandra.sh`
+- **DDL Hive:** `docker compose exec hive-server bash -lc "hive -f /hive/ddl/bronze.hql"`
+- **Spark batch:** `docker compose exec spark-master spark-submit --master spark://spark-master:7077 /opt/spark/jobs/batch_ingest.py`
+- **Spark streaming:** `docker compose exec spark-master spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 /opt/spark/jobs/stream_kafka.py`
+- **API:** `docker compose up -d api` (docs: `http://localhost:8000/docs`)
+- **Frontend:** `docker compose up -d frontend` (UI: `http://localhost:8080`)
+- **Test unitaire:** aucun pour le moment
 
-## High-level architecture
-- **Medallion pipeline** in `pipeline/`: `feeder.py` ingests raw sources into `data/raw/<source>/year=YYYY/month=MM/day=DD/`, `processor.py` cleans/validates and writes Silver parquet, `datamart.py` builds Gold in **DuckDB**.
-- **Gold store** is `data/demo/urban.duckdb` by default; APIs and tests read from it (override with `GOLD_DUCKDB_PATH`).
-- **API** in `api/`: FastAPI with JWT auth, paginated `/datamarts/*` endpoints, and GeoJSON in `/geo/*`.
-- **Frontend** in `frontend/`: static HTML/ESM (no JS build) consuming the API; MapLibre + Chart.js.
-- **Docs/Deliverables** in `docs/` and `scripts/`: CI rebuilds PDF report, guide, and slides.
+## Architecture (big picture)
+- **Data Lake HDFS** en Bronze/Silver/Gold; tables Hive externes pour SQL.
+- **Spark** gere batch + streaming Kafka.
+- **PostgreSQL** pour Gold relationnel; **Cassandra** pour events semi-structures.
+- **FastAPI** expose les datamarts et les events.
 
-## Key conventions
-- **Single source of config:** all paths and secrets come from `pipeline.config.Settings` (Pydantic). No hardcoded paths; use `get_settings()` and `Settings.partition_path()` for bronze/silver layouts.
-- **Demo-first defaults:** `GOLD_DUCKDB_PATH` defaults to the committed demo DB so API/tests work without re-running the pipeline.
-- **Public API style:** type hints are required on public signatures; module and main function docstrings are in **French**.
-- **Data source additions:** add new sources under `pipeline/sources/`, register POI sources in `paris_poi.POI_REGISTRY` or `datagouv_poi.DATAGOUV_REGISTRY`, document in `docs/DATA_CATALOG.md`, and add a `tests/test_<source>.py`.
-- **Ruff settings:** line length 100; `E501` and `B008` are intentionally ignored (see `pyproject.toml`).
+## Conventions
+- **Tous les chemins** sont sous HDFS (`/data/bronze`, `/data/silver`, `/data/gold`).
+- **DDL Hive** aligne sur les sorties Spark (parquet en Silver).
+- **Streaming** ecrit HDFS (append) + Cassandra (events).
+- **Config env** via `.env` uniquement.
