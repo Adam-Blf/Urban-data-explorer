@@ -174,6 +174,7 @@ def _silver_social_housing(raw_root: Path, logger) -> pl.DataFrame:
         raise FileNotFoundError(f"no social_housing parquet under {raw_root}")
     df = pl.read_parquet(files[-1])
 
+    # Schéma variable côté OpenData : on détecte les colonnes clés par heuristique.
     arr_col = next((c for c in df.columns if "arrond" in c.lower()), None)
     nb_col = next(
         (c for c in df.columns if "nombre" in c.lower() or "logements" in c.lower()),
@@ -227,6 +228,7 @@ def _silver_arrondissements(raw_root: Path, logger) -> pl.DataFrame:
             props.get("code_arrondissement")
             or _normalize_arr_code(props.get("c_ar"))
         )
+        # Surface approx. en km² : conversion simplifiée degrés → km.
         rows.append({
             "code_arrondissement": code,
             "centroid_lon": geom.centroid.x,

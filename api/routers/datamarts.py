@@ -160,6 +160,7 @@ def get_indicators(
         if indicator is None
         else [indicator]
     )
+    # Pivot des indicateurs en format long pour l'API.
     union = " UNION ALL ".join(
         f"SELECT code_arrondissement, label, '{i}' AS indicator, {i} AS value FROM kpi_arrondissement"
         for i in indicators

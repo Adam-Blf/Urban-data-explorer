@@ -142,6 +142,7 @@ def _build_kpi(con: duckdb.DuckDBPyConnection, logger) -> None:
     """4 indicateurs composites + KPIs synthèse · 1 ligne par arr."""
     logger.info("gold · building kpi_arrondissement (4 composite indicators)")
 
+    # Référentiels fixes (par arrondissement) pour normaliser les KPI.
     populations = ", ".join(
         f"('{f'751{i:02d}'}', {pop})"
         for i, pop in enumerate([
