@@ -5,10 +5,13 @@ from contextlib import contextmanager
 
 import psycopg2
 from cassandra.cluster import Cluster
+from psycopg2.extras import RealDictCursor
 
 
 @contextmanager
 def pg_conn():
+    """Open a PostgreSQL connection using environment variables."""
+
     conn = psycopg2.connect(
         host=os.getenv("POSTGRES_HOST", "postgres"),
         port=int(os.getenv("POSTGRES_PORT", "5432")),
@@ -22,7 +25,18 @@ def pg_conn():
         conn.close()
 
 
+def pg_fetch_all(sql: str, params: tuple[object, ...] | None = None):
+    """Execute a read query and return dictionaries for easy serialization."""
+
+    with pg_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(sql, params)
+            return [dict(row) for row in cursor.fetchall()]
+
+
 def cassandra_session():
+    """Open a Cassandra session configured from the environment."""
+
     host = os.getenv("CASSANDRA_HOST", "cassandra")
     port = int(os.getenv("CASSANDRA_PORT", "9042"))
     keyspace = os.getenv("CASSANDRA_KEYSPACE", "ude")
@@ -30,4 +44,3 @@ def cassandra_session():
     session = cluster.connect()
     session.set_keyspace(keyspace)
     return session
-

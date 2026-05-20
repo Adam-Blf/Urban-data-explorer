@@ -14,14 +14,27 @@ def main():
 
     producer = KafkaProducer(bootstrap_servers=broker)
 
-    payload = {
-        "event_id": str(uuid.uuid4()),
-        "event_type": "transaction",
-        "payload": {"code_arrondissement": "75108", "prix_m2": "14200"},
-        "event_time": datetime.utcnow().isoformat() + "Z",
-    }
+    events = [
+        {
+            "event_id": str(uuid.uuid4()),
+            "event_type": "service_snapshot",
+            "source_id": "velib_disponibilite",
+            "arrondissement_code": "75108",
+            "payload": {"is_renting": "true", "is_installed": "true", "name": "Parc Monceau"},
+            "event_time": datetime.utcnow().isoformat() + "Z",
+        },
+        {
+            "event_id": str(uuid.uuid4()),
+            "event_type": "service_snapshot",
+            "source_id": "sanisettesparis",
+            "arrondissement_code": "75101",
+            "payload": {"statut": "Ouverte", "acces_pmr": "Oui"},
+            "event_time": datetime.utcnow().isoformat() + "Z",
+        },
+    ]
 
-    producer.send(topic, json.dumps(payload).encode("utf-8"))
+    for payload in events:
+        producer.send(topic, json.dumps(payload).encode("utf-8"))
     producer.flush()
     producer.close()
 

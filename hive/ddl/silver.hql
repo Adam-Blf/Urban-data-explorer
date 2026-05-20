@@ -1,30 +1,20 @@
 CREATE DATABASE IF NOT EXISTS ude;
 USE ude;
 
-CREATE EXTERNAL TABLE IF NOT EXISTS silver_transactions (
-  code_arrondissement STRING,
-  date_mutation DATE,
-  prix_m2 DOUBLE,
-  lat DOUBLE,
-  lon DOUBLE,
-  year INT,
-  month INT
+CREATE EXTERNAL TABLE IF NOT EXISTS silver_sources (
+  source_title STRING,
+  family STRING,
+  raw_payload STRING,
+  load_ts STRING,
+  arrondissement_code STRING,
+  postal_code STRING,
+  status STRING,
+  category STRING,
+  latitude DOUBLE,
+  longitude DOUBLE,
+  quality_flag STRING
 )
+PARTITIONED BY (source_id STRING, snapshot_date STRING)
 STORED AS PARQUET
-LOCATION '/data/silver/transactions';
-
-CREATE EXTERNAL TABLE IF NOT EXISTS silver_social_housing (
-  code_arrondissement STRING,
-  year INT,
-  nb_logements_finances INT
-)
-STORED AS PARQUET
-LOCATION '/data/silver/social_housing';
-
-CREATE EXTERNAL TABLE IF NOT EXISTS silver_air_quality (
-  date_obs STRING,
-  aqi_mean_paris DOUBLE
-)
-STORED AS PARQUET
-LOCATION '/data/silver/air_quality';
+LOCATION '/data/silver/sources';
 

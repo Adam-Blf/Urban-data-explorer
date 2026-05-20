@@ -1,6 +1,7 @@
 services:
   zookeeper:
     image: bitnami/zookeeper:3.9
+    restart: unless-stopped
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     ports:
@@ -8,6 +9,7 @@ services:
 
   kafka:
     image: bitnami/kafka:3.7
+    restart: unless-stopped
     depends_on:
       - zookeeper
     environment:
@@ -22,17 +24,24 @@ services:
 
   postgres:
     image: postgres:16
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=ude
       - POSTGRES_USER=ude
       - POSTGRES_PASSWORD=ude
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ude -d ude"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     volumes:
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   cassandra:
     image: cassandra:4.1
+    restart: unless-stopped
     ports:
       - "9042:9042"
     volumes:
@@ -41,6 +50,7 @@ services:
 
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    restart: unless-stopped
     environment:
       - CLUSTER_NAME=ude
       - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
@@ -52,6 +62,7 @@ services:
 
   datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    restart: unless-stopped
     depends_on:
       - namenode
     environment:
@@ -60,6 +71,7 @@ services:
 
   hive-metastore-db:
     image: postgres:12
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=metastore
       - POSTGRES_USER=hive
@@ -67,6 +79,7 @@ services:
 
   hive-metastore:
     image: bde2020/hive-metastore:2.3.2-postgresql-metastore
+    restart: unless-stopped
     depends_on:
       - namenode
       - datanode
@@ -81,6 +94,7 @@ services:
 
   hive-server:
     image: bde2020/hive:2.3.2-postgresql-metastore
+    restart: unless-stopped
     depends_on:
       - hive-metastore
     environment:
@@ -92,27 +106,39 @@ services:
       - ./hive/ddl:/hive/ddl:ro
 
   spark-master:
-    image: bitnami/spark:3.5
+    build:
+      context: .
+      dockerfile: spark/Dockerfile
+    restart: unless-stopped
     environment:
       - SPARK_MODE=master
+      - PYTHONPATH=/opt/spark
     ports:
       - "7077:7077"
       - "8081:8080"
     volumes:
       - ./spark/jobs:/opt/spark/jobs:ro
+      - ./etl:/opt/spark/etl:ro
 
   spark-worker:
-    image: bitnami/spark:3.5
+    build:
+      context: .
+      dockerfile: spark/Dockerfile
+    restart: unless-stopped
     depends_on:
       - spark-master
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
+      - PYTHONPATH=/opt/spark
+    volumes:
+      - ./etl:/opt/spark/etl:ro
 
   api:
     build:
       context: .
       dockerfile: api/Dockerfile
+    restart: unless-stopped
     depends_on:
       - postgres
       - cassandra
@@ -120,8 +146,14 @@ services:
       - .env
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
 
   frontend:
     build: ./frontend
+    restart: unless-stopped
     ports:
       - "8080:80"

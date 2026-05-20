@@ -3,63 +3,41 @@ from __future__ import annotations
 import argparse
 from datetime import date
 
+import polars as pl
 from pyspark.sql import SparkSession
 
-
-def parse_args():
-    p = argparse.ArgumentParser(description="Bronze ingest (synthetic seed).")
-    p.add_argument("--ingestion-date", default=str(date.today()))
-    return p.parse_args()
+from etl.catalog import ALL_SOURCES
+from etl.processing import build_bronze_records, read_source_frame
 
 
-def main():
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Bronze ingest for all catalog sources.")
+    parser.add_argument("--snapshot-date", default=str(date.today()))
+    return parser.parse_args()
+
+
+def main() -> None:
+    """Fetch every downloadable source and persist Bronze snapshots."""
+
     args = parse_args()
-    spark = (
-        SparkSession.builder.appName("ude-bronze-ingest")
-        .getOrCreate()
-    )
+    spark = SparkSession.builder.appName("ude-bronze-ingest").getOrCreate()
+    bronze_path = "hdfs://namenode:8020/data/bronze/sources"
 
-    base = "hdfs://namenode:8020/data/bronze"
-
-    transactions = spark.createDataFrame(
-        [
-            ("75101", "2024-01-15", 12500.0, 48.86, 2.35),
-            ("75108", "2024-01-20", 14200.0, 48.87, 2.32),
-            ("75115", "2024-02-02", 11000.0, 48.84, 2.30),
-        ],
-        ["code_arrondissement", "date_mutation", "prix_m2", "lat", "lon"],
-    )
-
-    social = spark.createDataFrame(
-        [
-            ("75101", 2024, 120),
-            ("75108", 2024, 210),
-            ("75115", 2024, 180),
-        ],
-        ["code_arrondissement", "year", "nb_logements_finances"],
-    )
-
-    air = spark.createDataFrame(
-        [
-            ("2024-01-15", 32.5),
-            ("2024-01-16", 28.1),
-        ],
-        ["date_obs", "aqi_mean_paris"],
-    )
-
-    transactions.write.mode("overwrite").json(
-        f"{base}/transactions/ingestion_date={args.ingestion_date}"
-    )
-    social.write.mode("overwrite").json(
-        f"{base}/social_housing/ingestion_date={args.ingestion_date}"
-    )
-    air.write.mode("overwrite").json(
-        f"{base}/air_quality/ingestion_date={args.ingestion_date}"
-    )
+    for spec in ALL_SOURCES:
+        if spec.metadata_only:
+            continue
+        source_frame = read_source_frame(spec)
+        bronze_records = build_bronze_records(spec, source_frame, args.snapshot_date)
+        if not bronze_records:
+            continue
+        bronze_polars = pl.DataFrame(bronze_records)
+        spark_frame = spark.createDataFrame(bronze_polars.to_dicts())
+        spark_frame.write.mode("append").partitionBy("source_id", "snapshot_date").parquet(
+            bronze_path
+        )
 
     spark.stop()
 
 
 if __name__ == "__main__":
     main()
-

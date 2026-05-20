@@ -1,28 +1,23 @@
 CREATE DATABASE IF NOT EXISTS ude;
 USE ude;
 
-CREATE EXTERNAL TABLE IF NOT EXISTS bronze_transactions (
-  code_arrondissement STRING,
-  date_mutation STRING,
-  prix_m2 DOUBLE,
-  lat DOUBLE,
-  lon DOUBLE
+CREATE EXTERNAL TABLE IF NOT EXISTS bronze_sources (
+  source_title STRING,
+  family STRING,
+  raw_payload STRING,
+  load_ts STRING
+)
+PARTITIONED BY (source_id STRING, snapshot_date STRING)
+STORED AS PARQUET
+LOCATION '/data/bronze/sources';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS bronze_events (
+  event_id STRING,
+  event_type STRING,
+  source_id STRING,
+  arrondissement_code STRING,
+  payload STRING,
+  event_time TIMESTAMP
 )
 ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
-LOCATION '/data/bronze/transactions';
-
-CREATE EXTERNAL TABLE IF NOT EXISTS bronze_social_housing (
-  code_arrondissement STRING,
-  year INT,
-  nb_logements_finances INT
-)
-ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
-LOCATION '/data/bronze/social_housing';
-
-CREATE EXTERNAL TABLE IF NOT EXISTS bronze_air_quality (
-  date_obs STRING,
-  aqi_mean_paris DOUBLE
-)
-ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
-LOCATION '/data/bronze/air_quality';
-
+LOCATION '/data/bronze/events';
